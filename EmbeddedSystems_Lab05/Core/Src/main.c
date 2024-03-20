@@ -101,9 +101,9 @@ int main(void)
 	// set I2C2 to CR1
 	I2C2->CR1 |= I2C_CR1_PE;
 	// set up transcation params
-	I2C2->CR2 = 0x69;
+	I2C2->CR2 |= (0x69<<1);
 	I2C2->CR2 |= (1<<16); // nbytes is 16-23, set bit to 1
-	I2C2->CR2 &=~ (1<<0); // RD_wrn , write = 0
+	I2C2->CR2 &=~ (1<<10); // RD_wrn , write = 0
 	I2C2->CR2 |= (1<<13); // enable start bit
 	test = 1;
 	// led testing 
@@ -118,52 +118,56 @@ int main(void)
 	// led: 6-red 7-blue 8-orange 9-green
 	// GPIOC->ODR |= (1<<6); //visual indictation 
 
-	
+
 	while (test == 1){
-		HAL_Delay(100);
-		GPIOC->ODR ^= (1<<9); //visual indictation 
+		// GPIOC->ODR ^= (1<<6); // check if in loop
+		HAL_Delay(50);
 		// check for flags 
 		if (I2C2->ISR & (1<<4)){ // NACKF flag - bad
 			// (if this happens wires are probably bad)
-			GPIOC->ODR |= (1<<6); //visual indictation 
 		}
 		else if (I2C2->ISR & (1<<1)){ // TXIS flag - good
 			test = 0;
-			GPIOC->ODR |= (1<<7); //visual indictation 
 			
 		}	
 	}
+	
 	// write the who am i address 
 	I2C2->TXDR = 0x0F;
 	test =1;
 	while (test == 1){ // transfer complete flag
-		if (I2C2->ISR == (1<<6)){
+		if (I2C2->ISR & (1<<6)){
 			test = 0;
-			
 		}
 	}
+	
 	// set up transcation params with rd being read
-	I2C2->CR2 = 0x6B;
+	I2C2->CR2 |= (0x69<<1);
 	I2C2->CR2 |= (1<<16); // nbytes is 16-23, set bit to 1
-	I2C2->CR2 |= (1<<0); // RD_wrn , read = 1
+	I2C2->CR2 |= (1<<10); // RD_wrn , read = 1
 	I2C2->CR2 |= (1<<13); // enable start bit
 	test = 1;
 	while (test == 1){
 		// check for flags 
-		if (I2C2->ISR == (1<<4)){ // NACKF flag - bad
-			//  (if this happens wires are probably bad)
+		// GPIOC->ODR ^= (1<<6); 
+		HAL_Delay(50);
+		if (I2C2->ISR & (1<<4)){ // NACKF flag - bad
+			//  (if this happens wires are probably bad) 		
 		}
-		if (I2C2->ISR == (1<<1)){ // TXIS flag - good
+		if (I2C2->ISR & (1<<2)){ // RXNE flag - good
 			test = 0;
 		}	
 	}
+	test =1;
 	while (test == 1){ // transfer complete flag
-		if (I2C2->ISR == (1<<6)){
+		if (I2C2->ISR & (1<<6)){
 			test = 0;
+			//GPIOC->ODR |= (1<<6); //visual indictation 
 		}
 	}
 	// check the RXDR register for 0xD4
 	if (I2C2->RXDR == 0xD3){
+		GPIOC->ODR |= (1<<7); 
 	}
 	// set the stop bit 
 	I2C2->CR2 |= (1<<14);
