@@ -39,6 +39,7 @@ void Read_Setup(void){
 	I2C2->CR2 |= (1<<10); // RD_wrn , write = 0
 	I2C2->CR2 |= (1<<13); // enable start bit
 }
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -53,8 +54,52 @@ void Read_Setup(void){
 /* USER CODE BEGIN PD */
 int test;
 int Angle;
+int x_low;
+int x_high; 
+int x; 
+int y_low;
+int y_high;
+int y;
 /* USER CODE END PD */
 
+void TXIS_Flag(void){
+	test = 1;
+	while (test == 1){
+		// GPIOC->ODR ^= (1<<6); // check if in loop
+		// HAL_Delay(50);
+		// check for flags 
+		if (I2C2->ISR & (1<<4)){ // NACKF flag - bad
+			// (if this happens wires are probably bad)
+		}
+		else if (I2C2->ISR & (1<<1)){ // TXIS flag - good
+			test = 0;
+		}	
+	}
+}
+
+void TC_Flag(void){
+	test =1;
+	while (test == 1){ // transfer complete flag
+		if (I2C2->ISR & (1<<6)){
+			test = 0;
+		}
+	}
+}
+
+void RXNE_Flag(void){
+	test = 1;
+	while (test == 1){
+		// check for flags 
+		// GPIOC->ODR ^= (1<<6); 
+		// HAL_Delay(50);
+		if (I2C2->ISR & (1<<4)){ // NACKF flag - bad
+			//  (if this happens wires are probably bad) 		
+		}
+		if (I2C2->ISR & (1<<2)){ // RXNE flag - good
+			test = 0;
+		}	
+	}
+}
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 
@@ -137,8 +182,8 @@ int main(void)
 	I2C2->CR2 |= (1<<16); // nbytes is 16-23, set bit to 1
 	I2C2->CR2 &=~ (1<<10); // RD_wrn , write = 0
 	I2C2->CR2 |= (1<<13); // enable start bit
+	
 	test = 1;
-
 	while (test == 1){
 		// GPIOC->ODR ^= (1<<6); // check if in loop
 		HAL_Delay(50);
@@ -190,7 +235,7 @@ int main(void)
 	}
 	// set the stop bit 
 	I2C2->CR2 |= (1<<14);
-	
+	/*
 	// Initializing the gyroscope 
 	// enable the x and y sensing in the CTRL_REG1 register 
 	// default address is 00000111
@@ -237,20 +282,85 @@ int main(void)
 			test = 0;
 		}
 	}
-	
-	
+	// set the stop bit 
+	I2C2->CR2 |= (1<<14);	
+	*/
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+		
+		HAL_Delay(100);
 		// step 1 write a transaction to I2C2->CR2
 		Write_Setup();
 		// step 2 write the register address to be read to the gyroscope 
-		
+		TXIS_Flag();
+		// write to the 0xA8 for x  
+		I2C2->TXDR = 0xA8;
+		TC_Flag();
 		// step 3 start a new read transaction 
+		Read_Setup();
 		// step 4 read the data in the IC2C->RXDR register 
-		// repeat four times for each direction 
-	
+		RXNE_Flag();
+		TC_Flag();
+		// check the RXDR register for x data 
+		x_low = I2C2->RXDR;
+		// check the RXDR register for x data 
+		x_high = I2C2->RXDR;		
+		x_high = (x_high << 8);
+		x = x_low | x_high;
+		
+		// set the stop bit 
+		I2C2->CR2 |= (1<<14);		
+		// step 5 repeat for y
+		// step 1 write a transaction to I2C2->CR2
+		Write_Setup();
+		// step 2 write the register address to be read to the gyroscope 
+		TXIS_Flag();
+		// write to the 0xAA for y  
+		I2C2->TXDR = 0xAA;
+		TC_Flag();
+		// step 3 start a new read transaction 
+		Read_Setup();
+		// step 4 read the data in the IC2C->RXDR register 
+		RXNE_Flag();
+		TC_Flag();
+		// check the RXDR register for y data 
+		y_low = I2C2->RXDR;
+		Read_Setup();
+		RXNE_Flag();
+		TC_Flag();
+		y_high = I2C2->RXDR;
+		y_high = (y_high << 8);
+		y = y_low | y_high;
+		// set the stop bit 
+		I2C2->CR2 |= (1<<14);		
+		// step 6 activate LEDS
+		if (x>5000){
+			GPIOC->ODR |=  (1<<6);
+			GPIOC->ODR &=~ (1<<7);
+		}
+		else if (x<5000) {
+			GPIOC->ODR |=  (1<<7);
+			GPIOC->ODR &=~ (1<<6);
+		}
+		else{
+			GPIOC->ODR &=~ (1<<6);
+			GPIOC->ODR &=~ (1<<7);
+		}
+		if (y>0){
+			GPIOC->ODR |=  (1<<8);
+			GPIOC->ODR &=~ (1<<9);
+		}
+		else if (y<0) {
+			GPIOC->ODR |=  (1<<9);
+			GPIOC->ODR &=~ (1<<8);
+		}
+		else{
+			GPIOC->ODR &=~ (1<<6);
+			GPIOC->ODR &=~ (1<<7);
+		}
+		
   }
   /* USER CODE END 3 */
 }

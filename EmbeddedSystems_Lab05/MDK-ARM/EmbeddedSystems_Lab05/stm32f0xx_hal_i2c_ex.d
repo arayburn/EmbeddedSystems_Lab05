@@ -8,9 +8,9 @@ embeddedsystems_lab05/stm32f0xx_hal_i2c_ex.o: \
   ..\Drivers\CMSIS\Device\ST\STM32F0xx\Include\stm32f072xb.h \
   ..\Drivers\CMSIS\Include\core_cm0.h \
   C:\Keil_v5\ARM\ARMCLANG\include\stdint.h \
-  C:\Users\Alex\OneDrive\ -\ University\ of\ Utah\Fall\ 2023\Embedded\ Systems\EmbeddedSystems_Lab05\EmbeddedSystems_Lab05\Drivers\CMSIS\Include\cmsis_version.h \
-  C:\Users\Alex\OneDrive\ -\ University\ of\ Utah\Fall\ 2023\Embedded\ Systems\EmbeddedSystems_Lab05\EmbeddedSystems_Lab05\Drivers\CMSIS\Include\cmsis_compiler.h \
-  C:\Users\Alex\OneDrive\ -\ University\ of\ Utah\Fall\ 2023\Embedded\ Systems\EmbeddedSystems_Lab05\EmbeddedSystems_Lab05\Drivers\CMSIS\Include\cmsis_armclang.h \
+  C:\Users\arayb\OneDrive\ -\ University\ of\ Utah\Fall\ 2023\Embedded\ Systems\EmbeddedSystems_Lab05\EmbeddedSystems_Lab05\Drivers\CMSIS\Include\cmsis_version.h \
+  C:\Users\arayb\OneDrive\ -\ University\ of\ Utah\Fall\ 2023\Embedded\ Systems\EmbeddedSystems_Lab05\EmbeddedSystems_Lab05\Drivers\CMSIS\Include\cmsis_compiler.h \
+  C:\Users\arayb\OneDrive\ -\ University\ of\ Utah\Fall\ 2023\Embedded\ Systems\EmbeddedSystems_Lab05\EmbeddedSystems_Lab05\Drivers\CMSIS\Include\cmsis_armclang.h \
   C:\Keil_v5\ARM\ARMCLANG\include\arm_compat.h \
   C:\Keil_v5\ARM\ARMCLANG\include\arm_acle.h \
   ..\Drivers\CMSIS\Device\ST\STM32F0xx\Include\system_stm32f0xx.h \
