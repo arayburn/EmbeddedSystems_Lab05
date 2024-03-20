@@ -18,7 +18,27 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+void Write_Setup(void){
+	// set timingr to 100khz
+	I2C2->TIMINGR = 0x13;
+	// set I2C2 to CR1
+	I2C2->CR1 |= I2C_CR1_PE;
+	I2C2->CR2 |= (0x69<<1);
+	I2C2->CR2 |= (1<<16); // nbytes is 16-23, set bit to 1
+	I2C2->CR2 &=~ (1<<10); // RD_wrn , write = 0
+	I2C2->CR2 |= (1<<13); // enable start bit
+}
 
+void Read_Setup(void){
+	// set timingr to 100khz
+	I2C2->TIMINGR = 0x13;
+	// set I2C2 to CR1
+	I2C2->CR1 |= I2C_CR1_PE;
+	I2C2->CR2 |= (0x69<<1);
+	I2C2->CR2 |= (1<<16); // nbytes is 16-23, set bit to 1
+	I2C2->CR2 |= (1<<10); // RD_wrn , write = 0
+	I2C2->CR2 |= (1<<13); // enable start bit
+}
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -32,6 +52,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 int test;
+int Angle;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -93,6 +114,17 @@ int main(void)
 	GPIOC->MODER &=~ (1<<1); // PC0 = 0,1
 	GPIOC->OTYPER &=~ (1<<0); // push pull = 0, PC0 = 0
 	GPIOC->ODR |= (1<<0);	// set pin to high 
+		// led testing 
+	GPIOC->MODER &=~(1<<15); // clear
+	GPIOC->MODER |= (1<<14); // enable 
+	GPIOC->MODER &=~(1<<13); // clear
+	GPIOC->MODER |= (1<<12); // enable
+	GPIOC->MODER &=~(1<<19); // clear
+	GPIOC->MODER |= (1<<18); // enable 
+	GPIOC->MODER &=~(1<<17); // clear
+	GPIOC->MODER |= (1<<16); // enable
+	// led: 6-red 7-blue 8-orange 9-green
+	// GPIOC->ODR |= (1<<6); //visual indictation 
 	
 	// enable the I2C2 in the RCC
 	RCC->APB1ENR |= RCC_APB1ENR_I2C2EN;
@@ -106,18 +138,6 @@ int main(void)
 	I2C2->CR2 &=~ (1<<10); // RD_wrn , write = 0
 	I2C2->CR2 |= (1<<13); // enable start bit
 	test = 1;
-	// led testing 
-	GPIOC->MODER &=~(1<<15); // clear
-	GPIOC->MODER |= (1<<14); // enable 
-	GPIOC->MODER &=~(1<<13); // clear
-	GPIOC->MODER |= (1<<12); // enable
-	GPIOC->MODER &=~(1<<19); // clear
-	GPIOC->MODER |= (1<<18); // enable 
-	GPIOC->MODER &=~(1<<17); // clear
-	GPIOC->MODER |= (1<<16); // enable
-	// led: 6-red 7-blue 8-orange 9-green
-	// GPIOC->ODR |= (1<<6); //visual indictation 
-
 
 	while (test == 1){
 		// GPIOC->ODR ^= (1<<6); // check if in loop
@@ -128,7 +148,6 @@ int main(void)
 		}
 		else if (I2C2->ISR & (1<<1)){ // TXIS flag - good
 			test = 0;
-			
 		}	
 	}
 	
@@ -165,20 +184,73 @@ int main(void)
 			//GPIOC->ODR |= (1<<6); //visual indictation 
 		}
 	}
-	// check the RXDR register for 0xD4
+	// check the RXDR register for 0xD3
 	if (I2C2->RXDR == 0xD3){
-		GPIOC->ODR |= (1<<7); 
+		// GPIOC->ODR |= (1<<7); 
 	}
 	// set the stop bit 
 	I2C2->CR2 |= (1<<14);
+	
+	// Initializing the gyroscope 
+	// enable the x and y sensing in the CTRL_REG1 register 
+	// default address is 00000111
+	// set up transcation params
+	// set timingr to 100khz
+	I2C2->TIMINGR = 0x13;
+	// set I2C2 to CR1
+	I2C2->CR1 |= I2C_CR1_PE;
+	I2C2->CR2 |= (0x69<<1);
+	I2C2->CR2 |= (1<<16); // nbytes is 16-23, set bit to 1
+	I2C2->CR2 &=~ (1<<10); // RD_wrn , write = 0
+	I2C2->CR2 |= (1<<13); // enable start bit
+	test = 1;
+	while (test == 1){
+		//GPIOC->ODR ^= (1<<9); // check if in loop
+		HAL_Delay(50);
+		// check for flags 
+		if (I2C2->ISR & (1<<4)){ // NACKF flag - bad
+			//GPIOC->ODR |= (1<<6);
+			// (if this happens wires are probably bad)
+		}
+		
+		else if (I2C2->ISR & (1<<1)){ // TXIS flag - good
+			test = 0;
+		}	
+	}
+	// write the control register 1 address 
+	I2C2->TXDR = 0x20;
+	test =1;
+	while (test == 1){ // transfer complete flag
+		//GPIOC->ODR ^= (1<<8); // check if in loop
+		HAL_Delay(50);
+		if (I2C2->ISR & (1<<6)){
+			test = 0;
+		}
+	}
+	// write the control register 1 address 
+	I2C2->TXDR = 0x0B; // 0000 1011 
+	test =1;
+	while (test == 1){ // transfer complete flag
+		//GPIOC->ODR ^= (1<<7); // check if in loop
+		HAL_Delay(50);
+		if (I2C2->ISR & (1<<6)){
+			test = 0;
+		}
+	}
+	
 	
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
+		// step 1 write a transaction to I2C2->CR2
+		Write_Setup();
+		// step 2 write the register address to be read to the gyroscope 
+		
+		// step 3 start a new read transaction 
+		// step 4 read the data in the IC2C->RXDR register 
+		// repeat four times for each direction 
+	
   }
   /* USER CODE END 3 */
 }
@@ -187,6 +259,9 @@ int main(void)
   * @brief System Clock Configuration
   * @retval None
   */
+
+
+
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
