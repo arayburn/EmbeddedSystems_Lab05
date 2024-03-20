@@ -116,17 +116,18 @@ int main(void)
 	GPIOC->MODER &=~(1<<17); // clear
 	GPIOC->MODER |= (1<<16); // enable
 	// led: 6-red 7-blue 8-orange 9-green
-	GPIOC->ODR |= (1<<6); //visual indictation 
+	// GPIOC->ODR |= (1<<6); //visual indictation 
+
 	
 	while (test == 1){
 		HAL_Delay(100);
 		GPIOC->ODR ^= (1<<9); //visual indictation 
 		// check for flags 
-		if (I2C2->ISR == (1<<4)){ // NACKF flag - bad
+		if (I2C2->ISR & (1<<4)){ // NACKF flag - bad
 			// (if this happens wires are probably bad)
-			GPIOC->ODR |= (1<<8); //visual indictation 
+			GPIOC->ODR |= (1<<6); //visual indictation 
 		}
-		if (I2C2->ISR == (1<<1)){ // TXIS flag - good
+		else if (I2C2->ISR & (1<<1)){ // TXIS flag - good
 			test = 0;
 			GPIOC->ODR |= (1<<7); //visual indictation 
 			
