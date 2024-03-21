@@ -3,6 +3,7 @@
 "embeddedsystems_lab05\main.o"
 "embeddedsystems_lab05\stm32f0xx_it.o"
 "embeddedsystems_lab05\stm32f0xx_hal_msp.o"
+"embeddedsystems_lab05\ashtoncode.o"
 "embeddedsystems_lab05\stm32f0xx_hal_tim.o"
 "embeddedsystems_lab05\stm32f0xx_hal_tim_ex.o"
 "embeddedsystems_lab05\stm32f0xx_hal_rcc.o"
