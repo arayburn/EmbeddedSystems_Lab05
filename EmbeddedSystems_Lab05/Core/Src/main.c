@@ -26,7 +26,7 @@ void Write_Setup(void){
 	// set I2C2 to CR1
 	I2C2->CR1 |= I2C_CR1_PE;
 	I2C2->CR2 |= (0x69<<1);
-	I2C2->CR2 |= (1<<16); // nbytes is 16-23, set bit to 1
+	I2C2->CR2 |= (2<<16); // nbytes is 16-23, set bit to 1
 	I2C2->CR2 &=~ (1<<10); // RD_wrn , write = 0
 	I2C2->CR2 |= (1<<13); // enable start bit
 }
@@ -39,7 +39,7 @@ void Read_Setup(void){
 	// set I2C2 to CR1
 	I2C2->CR1 |= I2C_CR1_PE;
 	I2C2->CR2 |= (0x69<<1);
-	I2C2->CR2 |= (1<<16); // nbytes is 16-23, set bit to 1
+	I2C2->CR2 |= (2<<16); // nbytes is 16-23, set bit to 1
 	I2C2->CR2 |= (1<<10); // RD_wrn , write = 0
 	I2C2->CR2 |= (1<<13); // enable start bit
 }
@@ -121,6 +121,13 @@ void SystemClock_Config(void);
   * @brief  The application entry point.
   * @retval int
   */
+	void ErrorLoop(uint16_t rate) {
+     while(1) {
+        GPIOC->ODR ^= (1 << 6);    // Flash RED LED infinitely 
+        HAL_Delay(rate);
+    }
+}
+
 int main(void)
 {
 	//system code
@@ -204,7 +211,7 @@ int main(void)
 		// write a transaction to I2C2->CR2
 		Write_Setup(); // write setup
 		TXIS_Flag(); // check for Txis flag
-		I2C2->TXDR = 0x28; // write to the 0xA8 for two byte x  
+		I2C2->TXDR = 0xA8; // write to the 0xA8 for two byte x  
 		TC_Flag(); // check for transfer complete
 		// breaking here, TC flag not setting
 		GPIOC->ODR |=  (1<<8);
