@@ -208,7 +208,6 @@ int main(void)
 		Write_Setup(); // write setup
 		TXIS_Flag(); // check for Txis flag
 		I2C2->TXDR = 0xA8; // write to the 0xA8 for two byte x  
-		GPIOC->ODR |=  (1<<8);
 		TC_Flag(); // check for transfer complete
 		// breaking here, TC flag not setting
 		GPIOC->ODR |=  (1<<7);
