@@ -69,8 +69,7 @@ int y;
 void TXIS_Flag(void){
 	while(!(I2C2->ISR & (I2C_ISR_TXIS | I2C_ISR_NACKF))){   // Wait until either TXIS or NACKF flags are set
     // GPIOC->ODR ^= (1<<7);    
-		if(I2C2->ISR & I2C_ISR_NACKF) {      
-            // ErrorLoopGreen(100); // Error condition, no ACK
+		if(I2C2->ISR & I2C_ISR_NACKF) {   
 					GPIOC->ODR |= (1<<6);
         }
 			}
@@ -78,7 +77,10 @@ void TXIS_Flag(void){
 
 void TC_Flag(void){
 	while (1){ // transfer complete flag
-		if (I2C2->ISR & (1<<6)){
+		if(I2C2->ISR & I2C_ISR_NACKF) {   
+			GPIOC->ODR |= (1<<6);
+		}
+		if (I2C2->ISR & I2C_ISR_TC){
 			break;
 		}
 	}
@@ -121,13 +123,7 @@ void SystemClock_Config(void);
   * @brief  The application entry point.
   * @retval int
   */
-	void ErrorLoop(uint16_t rate) {
-     while(1) {
-        GPIOC->ODR ^= (1 << 6);    // Flash RED LED infinitely 
-        HAL_Delay(rate);
-    }
-}
-
+	
 int main(void)
 {
 	//system code
@@ -212,9 +208,10 @@ int main(void)
 		Write_Setup(); // write setup
 		TXIS_Flag(); // check for Txis flag
 		I2C2->TXDR = 0xA8; // write to the 0xA8 for two byte x  
+		GPIOC->ODR |=  (1<<8);
 		TC_Flag(); // check for transfer complete
 		// breaking here, TC flag not setting
-		GPIOC->ODR |=  (1<<8);
+		GPIOC->ODR |=  (1<<7);
 		Read_Setup(); // read setup
 		RXNE_Flag(); // check for RXNE flag
 		x_low = I2C2->RXDR;	// check the RXDR register for x data 
@@ -224,25 +221,17 @@ int main(void)
 
 		
 		// write to the 0xAA for y  
-		/*
 		Write_Setup();  
-		I2C2->TXDR = 0xAA;
 		TXIS_Flag();
-		// step 3 start a new read transaction 
+		I2C2->TXDR = 0xAA;
+		TC_Flag(); // check for transfer complete
 		Read_Setup();
-		// step 4 read the data in the IC2C->RXDR register 
 		RXNE_Flag();
-		GPIOC->ODR |=  (1<<8);
-		// GPIOC->ODR |=  (1<<6);
 		// check the RXDR register for y data 
 		y_low = I2C2->RXDR;
-		// check the RXDR register for x data 
-		//Read_Setup();
 		RXNE_Flag();
-		//x_high = I2C2->RXDR;
 		y = (I2C2->RXDR << 8) | y_low; // Save upper byte
 		TC_Flag();		
-	*/
 	
 		// set the stop bit 
 		I2C2->CR2 |= (1<<14);
@@ -255,11 +244,6 @@ int main(void)
 			GPIOC->ODR |=  (1<<6);
 			GPIOC->ODR &=~ (1<<7);
 		}
-		//else{
-			//GPIOC->ODR &=~ (1<<6);
-			//GPIOC->ODR &=~ (1<<7);
-		//}
-		/*
 		if (y>0){
 			GPIOC->ODR |=  (1<<8);
 			GPIOC->ODR &=~ (1<<9);
@@ -268,14 +252,10 @@ int main(void)
 			GPIOC->ODR |=  (1<<9);
 			GPIOC->ODR &=~ (1<<8);
 		}
-		else{
-			GPIOC->ODR &=~ (1<<6);
-			GPIOC->ODR &=~ (1<<7);
-		}
-		*/
+
 		// set the stop bit 
-		// I2C2->CR2 |= (1<<14);
-		// I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
+		I2C2->CR2 |= (1<<14);
+		I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
 		
   }
   /* USER CODE END 3 */
