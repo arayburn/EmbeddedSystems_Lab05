@@ -26,7 +26,7 @@ void Write_Setup(void){
 	// set I2C2 to CR1
 	I2C2->CR1 |= I2C_CR1_PE;
 	I2C2->CR2 |= (0x69<<1);
-	I2C2->CR2 |= (2<<16); // nbytes is 16-23, set bit to 1
+	I2C2->CR2 |= (1<<16); // nbytes is 16-23, set bit to 1
 	I2C2->CR2 &=~ (1<<10); // RD_wrn , write = 0
 	I2C2->CR2 |= (1<<13); // enable start bit
 }
@@ -175,20 +175,22 @@ int main(void)
 	// set timingr to 100khz
 	// I2C2->TIMINGR = 0x13;
 	I2C2->TIMINGR = (1 << 28) | (0x13 << 0) | (0xF << 8) | (0x2 << 16) | (0x4 << 20);    // Set the timing register from table
-	// set I2C2 to CR1
-	I2C2->CR1 |= I2C_CR1_PE;
-	// set up transcation params
-	I2C2->CR2 |= (0x69<<1);
-	I2C2->CR2 |= (1<<16); // nbytes is 16-23, set bit to 1
-	I2C2->CR2 &=~ (1<<10); // RD_wrn , write = 0
-	I2C2->CR2 |= (1<<13); // enable start bit
-
 	
 	// Initializing the gyroscope 
 	// enable the x and y sensing in the CTRL_REG1 register 
 	// default address is 00000111
 	// set up transcation params
-	Write_Setup();
+	I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
+	// set timingr to 100khz
+	// I2C2->TIMINGR = 0x13;
+	I2C2->TIMINGR = (1 << 28) | (0x13 << 0) | (0xF << 8) | (0x2 << 16) | (0x4 << 20);
+	// set I2C2 to CR1
+	I2C2->CR1 |= I2C_CR1_PE;
+	I2C2->CR2 |= (0x69<<1);
+	I2C2->CR2 |= (2<<16); // nbytes is 16-23, set bit to 1
+	I2C2->CR2 &=~ (1<<10); // RD_wrn , write = 0
+	I2C2->CR2 |= (1<<13); // enable start bit
+
 	TXIS_Flag();
 	// write the control register 1 address 
 	I2C2->TXDR = 0x20;
@@ -196,7 +198,7 @@ int main(void)
 	// write the control register 1 address 
 	I2C2->TXDR = 0x0B; // 0000 1011 
 	TC_Flag();
-	I2C2->CR2 |= (1<<14);
+	// I2C2->CR2 |= (1<<14);
 	
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -208,17 +210,15 @@ int main(void)
 		Write_Setup(); // write setup
 		TXIS_Flag(); // check for Txis flag
 		I2C2->TXDR = 0xA8; // write to the 0xA8 for two byte x  
-		GPIOC->ODR |=  (1<<6);
 		TC_Flag(); // check for transfer complete
-		// breaking here, TC flag not setting
-		GPIOC->ODR |=  (1<<7);
+		// breaking here, TC flag not settinz
 		Read_Setup(); // read setup
 		RXNE_Flag(); // check for RXNE flag
 		x_low = I2C2->RXDR;	// check the RXDR register for x data 
 		RXNE_Flag(); // check for RXNE flag
 		x = (I2C2->RXDR << 8) | x_low; // Save upper byte and add to lower byte
 		TC_Flag();
-
+		
 		
 		// write to the 0xAA for y  
 		Write_Setup();  
@@ -234,28 +234,28 @@ int main(void)
 		TC_Flag();		
 	
 		// set the stop bit 
-		I2C2->CR2 |= (1<<14);
+		// I2C2->CR2 |= (1<<14);
 		// rotation LEDS
-		if (x>1000){
+		if (x>2000){
 			GPIOC->ODR |=  (1<<7);
 			GPIOC->ODR &=~ (1<<6);
 		}
-		else if (x<-1000) {
+		else if (x<-2000) {
 			GPIOC->ODR |=  (1<<6);
 			GPIOC->ODR &=~ (1<<7);
 		}
-		if (y>0){
+		if (y>2000){
 			GPIOC->ODR |=  (1<<8);
 			GPIOC->ODR &=~ (1<<9);
 		}
-		else if (y<0) { 
+		else if (y<-2000) { 
 			GPIOC->ODR |=  (1<<9);
 			GPIOC->ODR &=~ (1<<8);
 		}
 
 		// set the stop bit 
-		I2C2->CR2 |= (1<<14);
-		I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
+		//I2C2->CR2 |= (1<<14);
+		//I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
 		
   }
   /* USER CODE END 3 */
